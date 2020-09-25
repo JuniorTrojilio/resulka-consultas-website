@@ -56,7 +56,9 @@ export default function Home() {
         setTpSearch(TipeSearch.tpNCM)
         setText('Serviço gratuito de consulta por código e descrição da Nomenclatura Comum do Mercosul.');
         setCEST(null);
-        setCFOP(null);         
+        setCFOP(null);
+        setError(false);  
+        setValue('');       
     }
 
     function handleCEST(){
@@ -64,6 +66,8 @@ export default function Home() {
         setText('Serviço gratuito de consulta por código e descrição do Código Especificador da Substiruição Tributária.');
         setNCM(null);
         setCFOP(null); 
+        setError(false); 
+        setValue('');  
     }
 
     function handleCFOP(){
@@ -71,12 +75,11 @@ export default function Home() {
         setText('Serviço gratuito de consulta por código e descrição do Código Fiscal de Operações e Prestações das entradas e saídas de mercadorias.');
         setNCM(null);
         setCEST(null); 
+        setError(false); 
+        setValue('');  
     }
 
   function changeValue(value: string){
-      setCEST(null)
-      setCFOP(null)
-      setNCM(null)
       setValue(value)
       setError(false)
   }
@@ -150,8 +153,7 @@ export default function Home() {
         }
     } catch (error) {
         setError(true)
-        setErrorMsg(error.message)
-        
+        setErrorMsg(error.message)        
     }   
 }
 
@@ -205,6 +207,7 @@ export default function Home() {
           status="error" 
           alignSelf="center" 
           width="40vw" 
+          minWidth="50vh"                   
           justifyContent="space-between"
           borderRadius="sm"
           >
@@ -212,7 +215,6 @@ export default function Home() {
             <AlertIcon />
             <AlertTitle mr={2}>{errorMsg}</AlertTitle>
             </Box>            
-            <CloseButton  right="8px" top="8px" />
         </Alert>)}
         <Accordion 
           allowToggle 
