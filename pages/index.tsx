@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { 
   Grid, 
@@ -20,7 +20,7 @@ import {
   CloseButton
 } from '@chakra-ui/core';
 
-import ButtonBar, { currentlySearch, TipeSearch } from '../components/ButtonBar';
+import { ButtonBar, BoxButton } from '../components/ButtonBar/styles';
 import { SearchBar } from '../components/SearchBar/styles';
 import { ButtonSearch } from '../components/ButtonSearch/styles'
 import { Container } from '../components/Container/styles'
@@ -39,8 +39,39 @@ export default function Home() {
   const [importado, setImportado] = useState(0);
   const [nacional, setNacional] = useState(0);
   const [ UF, setUF] = useState('DF');
+  const [ value, setValue ] = useState('');  
+  const [text, setText] = useState('Serviço gratuito de consulta por código e descrição da Nomenclatura Comum do Mercosul.');
+  
+  enum TipeSearch {
+    tpNCM = 1,
+    tpCFOP = 2,
+    tpCEST = 3
+  }
 
-  const [ value, setValue ] = useState('');
+  const [tpSearch, setTpSearch] = useState<TipeSearch>(TipeSearch.tpNCM)
+
+ 
+
+    function handleNCM(){
+        setTpSearch(TipeSearch.tpNCM)
+        setText('Serviço gratuito de consulta por código e descrição da Nomenclatura Comum do Mercosul.');
+        setCEST(null);
+        setCFOP(null);         
+    }
+
+    function handleCEST(){
+        setTpSearch(TipeSearch.tpCEST)
+        setText('Serviço gratuito de consulta por código e descrição do Código Especificador da Substiruição Tributária.');
+        setNCM(null);
+        setCFOP(null); 
+    }
+
+    function handleCFOP(){
+        setTpSearch(TipeSearch.tpCFOP)
+        setText('Serviço gratuito de consulta por código e descrição do Código Fiscal de Operações e Prestações das entradas e saídas de mercadorias.');
+        setNCM(null);
+        setCEST(null); 
+    }
 
   function changeValue(value: string){
       setCEST(null)
@@ -57,34 +88,36 @@ export default function Home() {
       setMunicipal(responsetax.data.impostos.municipal)
       setImportado(responsetax.data.impostos.importadosfederal)
       setNacional(responsetax.data.impostos.nacionalfederal)
+      console.log(responsetax.data.impostos.estadual)
       
     } catch (error) {
-      
+      setError(true);
+      setErrorMsg(error.message)
     }
   }
 
   async function startSearch(code: string): Promise<void>{
     try {            
-        if(currentlySearch === TipeSearch.tpNCM){
+        if(tpSearch === TipeSearch.tpNCM){
             const responsencm = await services.getNCM(code, 1); 
-            setNCM(responsencm); 
-
-                        
+            setNCM(responsencm);                         
 
             if(responsencm.totalPages > 1){
                 for (let i = 2; i <= responsencm.totalPages; i++) {
                     const newresponsencm = await services.getNCM(code, i)                        
                     const datancm = responsencm.data.concat(newresponsencm.data);
-                    const newncm = { ...responsencm, ...datancm }
-                    searchTax('DF', newncm.data[0].codigo)  
+                    const newncm = { ...responsencm, ...datancm }                     
                     setNCM(newncm);                          
                 }
             }
+
+            searchTax('DF', responsencm.data[0].codigo) 
+
             setCEST(null);
             setCFOP(null);            
         }
 
-        if(currentlySearch === TipeSearch.tpCEST){
+        if(tpSearch === TipeSearch.tpCEST){
             const responsecest = await services.getCEST(code, 1)
             setCEST(responsecest);
             
@@ -100,7 +133,7 @@ export default function Home() {
             setCFOP(null); 
         }
 
-        if(currentlySearch === TipeSearch.tpCFOP){
+        if(tpSearch === TipeSearch.tpCFOP){
             const responsecfop = await services.getCFOP(code, 1)
             setCFOP(responsecfop);                
             
@@ -138,28 +171,17 @@ export default function Home() {
       " 
     >
       <Flex gridArea="BT" flexDir="column" justifyContent="center" alignItems="center" backgroundColor="#ECF0F1">
-        <ButtonBar />
-        {currentlySearch === TipeSearch.tpNCM && <Text
+      <BoxButton buttonActive={tpSearch}>
+            <ButtonBar onClick={() => handleNCM()}>NCM</ButtonBar>
+            <ButtonBar onClick={() => handleCFOP()}>CFOP</ButtonBar>
+            <ButtonBar onClick={() => handleCEST()}>CEST</ButtonBar>    
+        </BoxButton>    
+        <Text
           wordBreak="break-word"
           maxWidth="sm"
           textAlign="center"
           marginTop="50px"
-        >{`Serviço gratuito de consulta por código e descrição
-        da Nomenclatura Comum do Mercosul`}</Text>}
-        {currentlySearch === TipeSearch.tpCFOP && <Text
-          wordBreak="break-word"
-          maxWidth="sm"
-          textAlign="center"
-          marginTop="50px"
-        >{`Serviço gratuito de consulta por código e descrição
-         do Código Fiscal de Operações e Prestações das entradas e saídas de mercadorias.
-        `}</Text>}
-        {currentlySearch === TipeSearch.tpCEST && <Text
-          wordBreak="break-word"
-          maxWidth="sm"
-          textAlign="center"
-          marginTop="50px"
-        >{`Serviço gratuito de consulta por código e descrição do Código Especificador da Substiruição Tributária.`}</Text>}
+        >{text}</Text>
       </Flex> 
       <FormControl 
         display="flex" 
@@ -200,8 +222,8 @@ export default function Home() {
           borderRadius="md"
           maxWidth="770px"        
           > 
-          { currentlySearch === TipeSearch.tpNCM && ncm?.data.map(item => (
-            <AccordionItem padding="5px" outline="none">
+          { tpSearch === TipeSearch.tpNCM && ncm?.data.map(item => (
+            <AccordionItem padding="5px" outline="none" key={item.id}>
               <AccordionHeader onClick={() => searchTax(UF,item.codigo)}>
                 <Box 
                 flex="1" 
@@ -336,8 +358,8 @@ export default function Home() {
           </AccordionItem>
           ))}
 
-          { currentlySearch === TipeSearch.tpCEST && cest?.data.map(item => (
-            <AccordionItem padding="5px" outline="none">
+          { tpSearch === TipeSearch.tpCEST && cest?.data.map(item => (
+            <AccordionItem padding="5px" outline="none" key={item.id}>
               <AccordionHeader onClick={() => searchTax(UF,item.codigo)}>
                 <Box 
                 flex="1" 
@@ -376,8 +398,8 @@ export default function Home() {
           </AccordionItem>
           ))}
 
-        {currentlySearch === TipeSearch.tpCFOP && cfop?.data.map(item => (
-            <AccordionItem padding="5px" outline="none">
+        {tpSearch === TipeSearch.tpCFOP && cfop?.data.map(item => (
+            <AccordionItem padding="5px" outline="none" key={item.id}>
               <AccordionHeader onClick={() => searchTax(UF,item.codigo)}>
                 <Box 
                 flex="1" 
