@@ -139,13 +139,27 @@ export default function Home() {
     >
       <Flex gridArea="BT" flexDir="column" justifyContent="center" alignItems="center" backgroundColor="#ECF0F1">
         <ButtonBar />
-        <Text
+        {currentlySearch === TipeSearch.tpNCM && <Text
           wordBreak="break-word"
           maxWidth="sm"
           textAlign="center"
           marginTop="50px"
         >{`Serviço gratuito de consulta por código e descrição
-        da Nomenclatura Comum do Mercosul`}</Text>
+        da Nomenclatura Comum do Mercosul`}</Text>}
+        {currentlySearch === TipeSearch.tpCFOP && <Text
+          wordBreak="break-word"
+          maxWidth="sm"
+          textAlign="center"
+          marginTop="50px"
+        >{`Serviço gratuito de consulta por código e descrição
+         do Código Fiscal de Operações e Prestações das entradas e saídas de mercadorias.
+        `}</Text>}
+        {currentlySearch === TipeSearch.tpCEST && <Text
+          wordBreak="break-word"
+          maxWidth="sm"
+          textAlign="center"
+          marginTop="50px"
+        >{`Serviço gratuito de consulta por código e descrição do Código Especificador da Substiruição Tributária.`}</Text>}
       </Flex> 
       <FormControl 
         display="flex" 
