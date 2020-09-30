@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState, FormEvent, Component } from 'react'
+import publicIp from 'public-ip'
 
 import { 
   Grid, 
@@ -11,24 +12,25 @@ import {
   AccordionIcon, 
   Box,
   Select,
-  FormControl,
   Link,
   Divider,
   Alert,
   AlertIcon,
   AlertTitle,
-  CloseButton
+  Spinner
 } from '@chakra-ui/core';
 
 import { ButtonBar, BoxButton } from '../components/ButtonBar/styles';
 import { SearchBar } from '../components/SearchBar/styles';
 import { ButtonSearch } from '../components/ButtonSearch/styles'
 import { Container } from '../components/Container/styles'
-import Services, { CESTProps, CFOPProps, NCMProps, TAXProps } from '../services/services'
+import Services, { CESTProps, CFOPProps, NCMProps, TAXProps, QueryData } from '../services/services'
+import { Form, Label } from '../components/Form/styles';
 
 const services = new Services;
 
 export default function Home() {
+  const [wait, setWait] = useState(false);
   const [error, setError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('')
   const [ncm, setNCM] = useState<NCMProps | null>(null);
@@ -38,7 +40,7 @@ export default function Home() {
   const [municipal, setMunicipal] = useState(0);
   const [importado, setImportado] = useState(0);
   const [nacional, setNacional] = useState(0);
-  const [ UF, setUF] = useState('DF');
+  const [ UF, setUF] = useState('');
   const [ value, setValue ] = useState('');  
   const [text, setText] = useState('Serviço gratuito de consulta por código e descrição da Nomenclatura Comum do Mercosul.');
   
@@ -83,24 +85,26 @@ export default function Home() {
       setValue(value)
       setError(false)
   }
+  
 
   async function searchTax(UF:string, code : string): Promise<void>{
     try {
       const responsetax = await services.getTAX(UF, code)
-      setEstadual(responsetax.data.impostos.estadual)
-      setMunicipal(responsetax.data.impostos.municipal)
-      setImportado(responsetax.data.impostos.importadosfederal)
-      setNacional(responsetax.data.impostos.nacionalfederal)
-      console.log(responsetax.data.impostos.estadual)
+      setEstadual(responsetax.data?.impostos.estadual)
+      setMunicipal(responsetax.data?.impostos.municipal)
+      setImportado(responsetax.data?.impostos.importadosfederal)
+      setNacional(responsetax.data?.impostos.nacionalfederal)
       
     } catch (error) {
       setError(true);
-      setErrorMsg(error.message)
+      setErrorMsg(error.message);
     }
   }
 
-  async function startSearch(code: string): Promise<void>{
-    try {            
+  async function startSearch(code: string, event: FormEvent<HTMLFormElement>): Promise<void>{
+    event?.preventDefault();
+    setWait(true)
+     try {            
         if(tpSearch === TipeSearch.tpNCM){
             const responsencm = await services.getNCM(code, 1); 
             setNCM(responsencm);                         
@@ -114,10 +118,22 @@ export default function Home() {
                 }
             }
 
-            searchTax('DF', responsencm.data[0].codigo) 
+            const IP = await publicIp.v4();
+
+            const responseQuery = await services.getLocation(IP);
+            const UF = responseQuery.region;
+
+            if(UF){
+              setUF(UF)
+              searchTax(UF, responsencm.data[0].codigo);
+            }else{
+              setUF('DF')
+              searchTax('DF', responsencm.data[0].codigo); 
+            }
 
             setCEST(null);
-            setCFOP(null);            
+            setCFOP(null); 
+            setWait(false);           
         }
 
         if(tpSearch === TipeSearch.tpCEST){
@@ -134,6 +150,7 @@ export default function Home() {
             }
             setNCM(null);
             setCFOP(null); 
+            setWait(false);
         }
 
         if(tpSearch === TipeSearch.tpCFOP){
@@ -150,10 +167,12 @@ export default function Home() {
             }
             setNCM(null);
             setCEST(null); 
+            setWait(false);
         }
     } catch (error) {
-        setError(true)
-        setErrorMsg(error.message)        
+        setError(true);
+        setErrorMsg(error.message) ;
+        setWait(false);       
     }   
 }
 
@@ -185,20 +204,23 @@ export default function Home() {
           marginTop="50px"
         >{text}</Text>
       </Flex> 
-      <FormControl 
-        display="flex" 
-        gridArea="SI" 
-        justifyContent="center" 
-        alignItems="center"
+      <Form 
+        tabIndex={0}
+        onSubmit={(event) => startSearch(value, event)}
         >
-        <Container hasError={error}>
+        <Container hasError={error}>        
         <SearchBar 
                 placeholder="Digite a descrição ou o código" 
                 value={value} 
-                onChange={e => changeValue(e.target.value)}/>
-        <ButtonSearch onClick={() => startSearch(value)}>Pesquisar</ButtonSearch>
-        </Container>        
-      </FormControl>      
+                onChange={e => changeValue(e.target.value)}
+                type="text"
+                name="Search" 
+                id="SearchContent"               
+                />        
+        <ButtonSearch> Pesquisar</ButtonSearch>
+        <Label htmlFor="SearchContent">Digite a descrição ou código</Label>
+        </Container>     
+      </Form>      
       <Flex gridArea="RB" flexDir="column" justifyContent="center" alignItems="center" backgroundColor="#ECF0F1">
         {error && (
         <Alert 
@@ -216,6 +238,7 @@ export default function Home() {
             <AlertTitle mr={2}>{errorMsg}</AlertTitle>
             </Box>            
         </Alert>)}
+        {wait && (<Spinner color="red.500" />)}
         <Accordion 
           allowToggle 
           width="90vw" 
@@ -246,6 +269,9 @@ export default function Home() {
                   {item.descricao}
                 </Text>
                 <Divider />
+                  { wait ? (<Spinner color="red.500" alignSelf="center"/>) :                   
+                  (
+                  <>
                   <Text
                           fontWeight="bold"
                           color="#455a64"
@@ -260,7 +286,7 @@ export default function Home() {
                         fontWeight="bold"
                         color="#e8685e"
                       >Estado</Text>
-                      <Select value={'DF'} width="75px" onChange={e => searchTax(e.currentTarget.value, item.codigo)}>
+                      <Select value={UF} width="75px" onChange={e => searchTax(e.currentTarget.value, item.codigo)}>
                         <option value="AC">AC</option>
                         <option value="AL">AL</option>
                         <option value="AP">AP</option>
@@ -355,7 +381,8 @@ export default function Home() {
                           </Text>
                     </Flex>  
                     </Flex> 
-                  </Flex>               
+                  </Flex>
+                  </>)}           
               </AccordionPanel>
           </AccordionItem>
           ))}

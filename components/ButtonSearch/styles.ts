@@ -5,9 +5,9 @@ export const ButtonSearch = styled.button`
   height: 50px;
   width: 10vw;
   outline: none;
-  background: #e8685e;
+  background: #D62D24;
   border-radius: 0 5px 5px 0;
-  border: 2px solid #e8685e;
+  border: 2px solid #D62D24;
   color: #fff;
   font-weight: bold;
   cursor: pointer;

@@ -22,28 +22,28 @@ export const BoxButton = styled.div<Props>`
     ${props =>
     props.buttonActive === 1 &&
     css`
-      background-color: #e8685e;
+      background-color: #D62D24;
       color: #fff;
       transition: background-color 0.2s;
       &:hover {
-        background: ${shade(0.05, '#E8685E')};
+        background: ${shade(0.05, '#D62D24')};
         color: #fff;
       }
   `}
 
     & + Button {
         border-radius: 0;
-        color: #818181;
+        color: #4D4D4D;
         background-color: #fff;
 
         ${props =>
         props.buttonActive === 2 &&
         css`
-          background-color: #e8685e;
+          background-color: #D62D24;
           color: #fff;
           transition: background-color 0.2s;
           &:hover {
-            background: ${shade(0.05, '#E8685E')};
+            background: ${shade(0.05, '#D62D24')};
             color: #fff;
           }
         `}
@@ -51,17 +51,17 @@ export const BoxButton = styled.div<Props>`
 
     & + Button + Button{
         border-radius: 0 5px 5px 0;
-        color: #818181;
+        color: #4D4D4D;
         background-color: #fff;
 
         ${props =>
         props.buttonActive === 3 &&
         css`
-          background-color: #e8685e;
+          background-color: #D62D24;
           color: #fff;
           transition: background-color 0.2s;
           &:hover {
-            background: ${shade(0.05, '#E8685E')};
+            background: ${shade(0.05, '#D62D24')};
             color: #fff;
           }
         `}
@@ -78,13 +78,13 @@ export const ButtonBar = styled.button`
     line-height: 16px;
 
     cursor: pointer;
-    color: #818181;
+    color: #4D4D4D;
     border: none;
     border-radius: 5px 0 0 5px;
     background-color: #fff;
     
     &:hover {
-      background: #e8685e;
+      background: #D62D24;
       color: #fff;
     }
 `;
