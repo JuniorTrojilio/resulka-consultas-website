@@ -2,7 +2,6 @@ import apiNCM from '../api/api.NCM'
 import apiCEST from '../api/api.CEST'
 import apiCFOP from '../api/api.CFOP'
 import apiTAX from '../api/api.TAX'
-import apiQuery from '../api/api.LOCATION';
 
 export interface NCMProps {
     data: [
@@ -69,19 +68,6 @@ export interface NCMProps {
           id: string;
         }
       }
-  }
-
-  export interface QueryData{    
-      query: string;
-      status: string;
-      country: string;
-      region: string;
-      regionName: string;
-      city: string;
-      zip: string;
-      lat: number;
-      lon: number;
-      timezone: string;    
   }
 
   class Services {
@@ -155,16 +141,6 @@ export interface NCMProps {
         }
     
         return response.data;
-      }
-
-      public async getLocation(IP: String): Promise<QueryData>{
-        const response = await apiQuery.get<QueryData>(`${IP}?fields=status,message,country,region,regionName,city,zip,lat,lon,timezone,query`); 
-        
-        if(response.status !== 200){
-          throw new Error()
-        }
-
-        return response.data
       }
   }
 

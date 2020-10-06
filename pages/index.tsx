@@ -1,5 +1,4 @@
-import { useState, FormEvent, Component } from 'react'
-import publicIp from 'public-ip'
+import { useState, FormEvent } from 'react'
 
 import { 
   Grid, 
@@ -24,14 +23,16 @@ import { ButtonBar, BoxButton } from '../components/ButtonBar/styles';
 import { SearchBar } from '../components/SearchBar/styles';
 import { ButtonSearch } from '../components/ButtonSearch/styles'
 import { Container } from '../components/Container/styles'
-import Services, { CESTProps, CFOPProps, NCMProps, TAXProps, QueryData } from '../services/services'
+import Services, { CESTProps, CFOPProps, NCMProps } from '../services/services'
 import { Form, Label } from '../components/Form/styles';
 
 const services = new Services;
 
+
 export default function Home() {
   const [wait, setWait] = useState(false);
   const [error, setError] = useState(false);
+  const [alertError, setAlertError] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [ncm, setNCM] = useState<NCMProps | null>(null);
   const [cest, setCEST] = useState<CESTProps | null>(null);
@@ -51,7 +52,6 @@ export default function Home() {
   }
 
   const [tpSearch, setTpSearch] = useState<TipeSearch>(TipeSearch.tpNCM)
-
  
 
     function handleNCM(){
@@ -89,16 +89,21 @@ export default function Home() {
 
   async function searchTax(UF:string, code : string): Promise<void>{
     try {
-      const responsetax = await services.getTAX(UF, code)
-      setEstadual(responsetax.data?.impostos.estadual)
-      setMunicipal(responsetax.data?.impostos.municipal)
-      setImportado(responsetax.data?.impostos.importadosfederal)
-      setNacional(responsetax.data?.impostos.nacionalfederal)
-      
+      if(tpSearch === TipeSearch.tpNCM){
+        const responsetax = await services.getTAX(UF, code)
+        setEstadual(responsetax.data?.impostos.estadual)
+        setMunicipal(responsetax.data?.impostos.municipal)
+        setImportado(responsetax.data?.impostos.importadosfederal)
+        setNacional(responsetax.data?.impostos.nacionalfederal)
+        setUF(UF);
+        setAlertError(false)
+        setErrorMsg('');
+      }  
     } catch (error) {
       setError(true);
       setErrorMsg(error.message);
     }
+  
   }
 
   async function startSearch(code: string, event: FormEvent<HTMLFormElement>): Promise<void>{
@@ -116,21 +121,13 @@ export default function Home() {
                     const newncm = { ...responsencm, ...datancm }                     
                     setNCM(newncm);                          
                 }
+            }  
+            
+            if(!UF){
+              setAlertError(true)
+              setErrorMsg('Selecione um estado para visualizar suas aliquotas!');
             }
-
-            const IP = await publicIp.v4();
-
-            const responseQuery = await services.getLocation(IP);
-            const UF = responseQuery.region;
-
-            if(UF){
-              setUF(UF)
-              searchTax(UF, responsencm.data[0].codigo);
-            }else{
-              setUF('DF')
-              searchTax('DF', responsencm.data[0].codigo); 
-            }
-
+          
             setCEST(null);
             setCFOP(null); 
             setWait(false);           
@@ -238,6 +235,22 @@ export default function Home() {
             <AlertTitle mr={2}>{errorMsg}</AlertTitle>
             </Box>            
         </Alert>)}
+        {alertError && (
+        <Alert 
+          display="flex" 
+          flexDir="row" 
+          status="info" 
+          alignSelf="center" 
+          width="40vw" 
+          minWidth="50vh"                   
+          justifyContent="space-between"
+          borderRadius="sm"
+          >
+            <Box display="flex">
+            <AlertIcon />
+            <AlertTitle mr={2}>{errorMsg}</AlertTitle>
+            </Box>            
+        </Alert>)}
         {wait && (<Spinner color="red.500" />)}
         <Accordion 
           allowToggle 
@@ -287,6 +300,7 @@ export default function Home() {
                         color="#e8685e"
                       >Estado</Text>
                       <Select value={UF} width="75px" onChange={e => searchTax(e.currentTarget.value, item.codigo)}>
+                        <option value="--">--</option>
                         <option value="AC">AC</option>
                         <option value="AL">AL</option>
                         <option value="AP">AP</option>
@@ -476,7 +490,15 @@ export default function Home() {
         href="https://www.treeunfe.com.br/" 
         alt="Treeunfe Tecnologia"
         textDecor="none"
-        >Treeunfe Tecnologia </Link>
+        >Treeunfe Tecnologia </Link>  
+        <Flex flexDirection="column" justifyContent="space-betwenn" alignItems="center">
+          <a href='https://www.microsoft.com/store/apps/9NFNRKPDB4CD?cid=storebadge&ocid=badge'>
+                <img src="https://developer.microsoft.com/en-us/store/badges/images/English_get-it-from-MS.png" alt='Resulka badge' height="56px" width="182px"/>
+          </a>
+          <a href="https://snapcraft.io/resulkaconsultas">
+                <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg"/>
+          </a>
+        </Flex>       
       </Flex>
     </Grid>
       
